@@ -23,6 +23,7 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',')
 // 🔁 Cache en memoria con TTL de 60 segundos
 const cache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
 app.set('cache', cache);
+console.log("🔥 Cambio de prueba");
 
 // Middlwares de seguridad
 app.use(helmet({
