@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const express      = require('express');
 const helmet       = require('helmet');
-const cors         = require('cors');
 const morgan       = require('morgan');
 const rateLimit    = require('express-rate-limit');
 const NodeCache    = require('node-cache');
@@ -32,22 +31,26 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
-// — CORS usando array de orígenes
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : [];
+// — CORS manual dinámico para todas las rutas y métodos
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // Refleja el origen solicitado o usa '*' si no viene
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,x-api-key,Authorization');
+  if (req.method === 'OPTIONS') {
+    // Preflight
+    return res.sendStatus(204);
+  }
+  next();
+});
 
-app.use(cors({
-  origin: allowedOrigins,           // acepta cualquiera de esta lista
-  credentials: true,                // para las cookies/credenciales
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','x-api-key','Authorization'],
-}));
-
-// — Middlewares
+// — Middlewares de parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// — Logging en dev
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
@@ -60,7 +63,7 @@ app.use('/api/v1/users',          userRoutes);
 app.use('/api/v1/clientes',       clientesRoutes);
 app.use('/api/v1/advanced-stats', advancedStatsRoutes);
 
-// — 404
+// — 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
@@ -71,7 +74,7 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message });
 });
 
-// — Start
+// — Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor escuchando en http://0.0.0.0:${PORT}`);
 });
