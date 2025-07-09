@@ -70,9 +70,17 @@ app.use((req, res) => {
 
 // — Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({ error: err.message });
+  console.error('❌ Error:', {
+    message: err.message,
+    stack: err.stack,
+    status: err.status || 500
+  });
+  res.status(err.status || 500).json({
+    error: err.message,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+  });
 });
+
 
 // — Start server
 app.listen(PORT, '0.0.0.0', () => {
